@@ -1,0 +1,100 @@
+<html>
+  <head>
+    <title>Sample.html</title>
+  </head>
+  <body>
+    <h1>Xively Sample</h1>
+    <h2>Temperature is <span id="myelement"></span></h2>
+    Last updated: <span id="lastUpdate"></span>
+    <span id="timerHtml"></span>
+  <!-- Include jQuery -->
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+  <!-- Include XivelyJS -->
+  <script src="http://d23cj0cdvyoxg0.cloudfront.net/xivelyjs-1.0.4.min.js"></script>
+  <!-- Our Script (should be included in a separate file, only inline for demo purposes) -->
+  <script>
+    var cl = new Date();
+    function setTimer(d) {
+      cl = d;
+      updateTimer();
+    }
+    function updateTimer() {
+      ct = new Date();
+      sec = (ct.getTime() - cl.getTime()) / 1000;
+      if (sec < 0) sec = 0;
+      secStr = "";
+      hr = 0;
+      min = 0;
+      days = 0;
+      if (Math.floor(sec / 60) > 0) {
+	min = Math.floor(sec / 60);
+	sec = sec % 60;
+      }
+      if (Math.floor(min / 60) > 0) {
+	hr = Math.floor(min / 60);
+	min = min % 60;
+      }
+      if (hr >= 24) {
+	days = Math.floor(hr / 24);
+	hr = hr % 24;
+      }
+      if (days > 0) {
+	secStr = secStr + days + ":";
+	if (hr < 10) secStr = secStr + "0";
+      }
+      if ((hr > 0)  || (days > 0)) {
+	secStr = secStr + hr + ":";
+	if (min < 10) secStr = secStr + "0"
+      }
+      if ((min > 0) || (hr > 0) || (days > 0)) {
+	secStr = secStr + min + ":";
+	if (sec < 10) secStr = secStr + "0"
+      }
+      secStr = secStr + Math.floor(sec);
+      $(timerHtml).html(secStr);
+    }
+      
+
+    // Make sure the document is ready to be handled
+    $(document).ready(function($) {
+
+      // Set the Xively API key (https://xively.com/users/YOUR_USERNAME/keys)
+      xively.setKey("QBYdJj8du2KNVs76gzlZk5fgnrfSzl9bugz7rFhs6VrLWedS");
+
+      // Replace with your own values
+      var feedID        = 104830,          // Feed ID (the last number on the URL on the feed page on Xively)
+          datastreamID  = "2";       // Datastream ID
+          selector      = "#myelement";   // Your element on the page - takes any valid jQuery selector
+
+      // Get datastream data from Xively
+      xively.datastream.get(feedID, datastreamID, function ( datastream ) {
+        // WARNING: This code is only executed when we get a response back from Xively, it will likely execute after the rest your script
+        // NOTE: The variable "datastream" will contain all the Datastream information as an object. The structure of Datastream objects can be found at: 
+        // https://xively.com/dev/docs/api/quick_reference/api_resource_attributes/#datastream
+
+
+	// Display the current value from the datastream
+        $(selector).html( datastream["current_value"] + "&deg;F" );
+        //document.getElementById("lastUpdate").innerHTML =  datastream["at"];
+	d = new Date(datastream["at"]);
+        document.getElementById("lastUpdate").innerHTML = d.toLocaleString();
+	setTimer(d);
+	setInterval('updateTimer()', 1000);
+
+        // Getting realtime! The function associated with the subscribe method will be executed every time there is an update to the datastream
+        xively.datastream.subscribe( feedID, datastreamID, function ( event , datastream_updated ) {
+          // Display the current value from the updated datastream
+          $(selector).html( datastream_updated["current_value"] + "&deg;F" );
+	  d = new Date();
+          document.getElementById("lastUpdate").innerHTML = d.toLocaleString();
+	  setTimer(d);
+        });
+
+      });
+
+      // WARNING: Code here will continue executing while we get the datastream data from Xively, use the function associated with datastream.get to work with the data, when the request is complete
+    });
+  </script>
+</body>
+</html>
+
